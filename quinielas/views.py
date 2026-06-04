@@ -14,10 +14,10 @@ def paises_por_bombo(request):
         return Response({'error': f'participantes debe ser uno de {DIVISORES_48}'}, status=status.HTTP_400_BAD_REQUEST)
     participantes = int(participantes)
     selecciones = list(Seleccion.objects.order_by('id'))
-    chunk_size = len(selecciones) // participantes
+    num_bombos = len(selecciones) // participantes
     resultado = {}
-    for i in range(participantes):
-        grupo = selecciones[i * chunk_size:(i + 1) * chunk_size]
+    for i in range(num_bombos):
+        grupo = selecciones[i * participantes:(i + 1) * participantes]
         resultado[f"bombo_{i + 1}"] = SeleccionSerializer(grupo, many=True).data
     return Response(resultado)
 
