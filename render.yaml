@@ -12,4 +12,4 @@ services:
 
 databases:
   - name: quiniela-live-db
-    plan: basic-256
+    plan: basic-256mb
