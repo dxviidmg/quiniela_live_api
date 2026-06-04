@@ -3,12 +3,19 @@ from django.utils.text import slugify
 from datetime import datetime
 
 
-DIVISORES_48 = [2, 3, 4, 6, 8, 12, 16, 24]
+DIVISORES_48 = [2, 3, 4, 6, 8, 12, 16, 24, 48]
+
+
+class Bombo(models.Model):
+    numero = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"Bombo {self.numero}"
 
 
 class Seleccion(models.Model):
     nombre = models.CharField(max_length=100)
-    grupo = models.CharField(max_length=2)
+    bombo = models.ForeignKey(Bombo, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.nombre

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'quinielas',
     'rest_framework',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [

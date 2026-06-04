@@ -3,8 +3,13 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
-from .models import Quiniela, Seleccion, Participante
-from .serializers import QuinielaSerializer, ParticipanteSerializer
+from .models import Quiniela, Seleccion, Participante, Bombo
+from .serializers import QuinielaSerializer, ParticipanteSerializer, BomboSerializer
+
+
+class BomboViewSet(ListModelMixin, GenericViewSet):
+    queryset = Bombo.objects.prefetch_related('seleccion_set').all()
+    serializer_class = BomboSerializer
 
 
 class QuinielaViewSet(ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
@@ -32,13 +37,10 @@ class QuinielaViewSet(ListModelMixin, CreateModelMixin, RetrieveModelMixin, Upda
         if quiniela.participantes.count() != quiniela.numero_participantes:
             return Response({'error': 'Faltan jugadores'}, status=status.HTTP_400_BAD_REQUEST)
 
-        equipos = list(Seleccion.objects.all().order_by('?'))
-        participantes = list(quiniela.participantes.all())
-        equipos_por_jugador = 48 // len(participantes)
-
-        for i, participante in enumerate(participantes):
-            asignados = equipos[i * equipos_por_jugador:(i + 1) * equipos_por_jugador]
-            participante.selecciones.set(asignados)
+        asignaciones = request.data.get('asignaciones', [])
+        for asignacion in asignaciones:
+            participante = quiniela.participantes.get(id=asignacion['participante_id'])
+            participante.selecciones.set(asignacion['selecciones_ids'])
 
         quiniela.sorteada = True
         quiniela.save()
