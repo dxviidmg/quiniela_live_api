@@ -13,4 +13,3 @@ services:
 databases:
   - name: quiniela-live-db
     plan: basic-256
-git push --set-upstream origin develop
