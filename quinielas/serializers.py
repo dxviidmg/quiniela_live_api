@@ -1,19 +1,11 @@
 from rest_framework import serializers
-from .models import Quiniela, Seleccion, Participante, Bombo, DIVISORES_48
+from .models import Quiniela, Seleccion, Participante, DIVISORES_48
 
 
 class SeleccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Seleccion
         fields = ['id', 'nombre']
-
-
-class BomboSerializer(serializers.ModelSerializer):
-    paises = SeleccionSerializer(source='seleccion_set', many=True, read_only=True)
-
-    class Meta:
-        model = Bombo
-        fields = ['numero', 'paises']
 
 
 class ParticipanteSerializer(serializers.ModelSerializer):
