@@ -38,19 +38,4 @@ class QuinielaViewSet(ListModelMixin, CreateModelMixin, RetrieveModelMixin, Upda
         serializer.save(quiniela=quiniela)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=True, methods=['post'])
-    def sortear(self, request, slug=None):
-        quiniela = self.get_object()
-        if quiniela.sorteada:
-            return Response({'error': 'Ya fue sorteada'}, status=status.HTTP_400_BAD_REQUEST)
-        if quiniela.participantes.count() != quiniela.numero_participantes:
-            return Response({'error': 'Faltan jugadores'}, status=status.HTTP_400_BAD_REQUEST)
 
-        asignaciones = request.data.get('asignaciones', [])
-        for asignacion in asignaciones:
-            participante = quiniela.participantes.get(id=asignacion['participante_id'])
-            participante.selecciones.set(asignacion['selecciones_ids'])
-
-        quiniela.sorteada = True
-        quiniela.save()
-        return Response(QuinielaSerializer(quiniela).data)
