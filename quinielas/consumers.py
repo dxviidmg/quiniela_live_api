@@ -15,14 +15,22 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         QuinielaConsumer.salas.setdefault(self.slug, {})[self.channel_name] = None
         await self.accept()
+        
+        users = [n for n in QuinielaConsumer.salas[self.slug].values() if n]
+        await self.send(text_data=json.dumps({'type': 'user_list', 'users': users, 'count': len(users)}))
 
     async def receive(self, text_data):
         data = json.loads(text_data)
 
         if data.get('type') == 'join':
             nombre = data.get('nombre', 'Anónimo')
+            if nombre in QuinielaConsumer.salas.get(self.slug, {}).values():
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'El nombre ya está en uso. Elige otro.'}))
+                return
             await self._save_participante(nombre)
             QuinielaConsumer.salas[self.slug][self.channel_name] = nombre
+            users = [n for n in QuinielaConsumer.salas[self.slug].values() if n]
+            await self.send(text_data=json.dumps({'type': 'user_list', 'users': users, 'count': len(users)}))
             await self._broadcast_users()
 
         elif data.get('type') == 'start_draw':
