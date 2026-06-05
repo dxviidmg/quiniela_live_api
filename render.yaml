@@ -3,7 +3,7 @@ services:
     name: quiniela-live-api
     runtime: python
     buildCommand: "./build.sh"
-    startCommand: "gunicorn quiniela_live_api.wsgi:application"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT quiniela_live_api.asgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:
