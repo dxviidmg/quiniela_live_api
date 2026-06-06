@@ -7,14 +7,14 @@ class SeleccionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Seleccion
-        fields = ['id', 'nombre', 'eliminado', 'fase', 'fase_display', 'es_campeon', 'es_subcampeon', 'es_tercero']
+        fields = ['id', 'nombre', 'code', 'eliminado', 'fase', 'fase_display', 'es_campeon', 'es_subcampeon', 'es_tercero']
 
 
 class ParticipanteSerializer(serializers.ModelSerializer):
     selecciones = serializers.SerializerMethodField()
 
     def get_selecciones(self, obj):
-        qs = obj.selecciones.order_by('eliminado', '-fase', 'pk')
+        qs = obj.selecciones.order_by('eliminado', '-es_campeon', '-es_subcampeon', '-es_tercero', '-fase', 'pk')
         return SeleccionSerializer(qs, many=True).data
 
     class Meta:
