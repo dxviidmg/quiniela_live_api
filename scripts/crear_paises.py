@@ -53,8 +53,8 @@ PAISES = {
 
 
 def run():
-    for nombre, code in PAISES.items():
+    for nombre, codigo in PAISES.items():
         sel, _ = Seleccion.objects.get_or_create(nombre=nombre)
-        sel.code = code
+        sel.codigo = codigo
         sel.save()
     print(f"Se actualizaron {Seleccion.objects.count()} selecciones.")

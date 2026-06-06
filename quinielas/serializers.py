@@ -7,7 +7,7 @@ class SeleccionSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Seleccion
-        fields = ['id', 'nombre', 'code', 'eliminado', 'fase', 'fase_display', 'es_campeon', 'es_subcampeon', 'es_tercero']
+        fields = ['id', 'nombre', 'codigo', 'eliminado', 'fase', 'fase_display', 'es_campeon', 'es_subcampeon', 'es_tercero']
 
 
 class ParticipanteSerializer(serializers.ModelSerializer):
