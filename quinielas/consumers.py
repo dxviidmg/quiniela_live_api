@@ -27,6 +27,11 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
             if nombre in QuinielaConsumer.salas.get(self.slug, {}).values():
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'El nombre ya está en uso. Elige otro.'}))
                 return
+            usuarios_actuales = [n for n in QuinielaConsumer.salas.get(self.slug, {}).values() if n]
+            max_participantes = await self._get_max_participantes()
+            if len(usuarios_actuales) >= max_participantes:
+                await self.send(text_data=json.dumps({'type': 'error', 'message': f'La quiniela ya está llena ({max_participantes}/{max_participantes}).'}))
+                return
             await self._save_participante(nombre)
             QuinielaConsumer.salas[self.slug][self.channel_name] = nombre
             users = [n for n in QuinielaConsumer.salas[self.slug].values() if n]
@@ -43,6 +48,10 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
             QuinielaConsumer.salas.pop(self.slug, None)
         else:
             await self._broadcast_users()
+
+    @database_sync_to_async
+    def _get_max_participantes(self):
+        return Quiniela.objects.get(slug=self.slug).numero_participantes
 
     @database_sync_to_async
     def _save_participante(self, nombre):
