@@ -103,7 +103,7 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
                 'participante_id': participante.id,
                 'participante': participante.nombre,
                 'selecciones': [
-                    {'id': s.id, 'nombre': s.nombre}
+                    {'id': s.id, 'nombre': s.nombre, 'codigo': s.codigo}
                     for s in participante.selecciones.all()
                 ],
             })
