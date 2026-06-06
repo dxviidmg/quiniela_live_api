@@ -3,13 +3,19 @@ from .models import Quiniela, Seleccion, Participante, DIVISORES_48
 
 
 class SeleccionSerializer(serializers.ModelSerializer):
+    fase_display = serializers.CharField(source='get_fase_display', read_only=True)
+    
     class Meta:
         model = Seleccion
-        fields = ['id', 'nombre']
+        fields = ['id', 'nombre', 'eliminado', 'fase', 'fase_display', 'es_campeon', 'es_subcampeon', 'es_tercero']
 
 
 class ParticipanteSerializer(serializers.ModelSerializer):
-    selecciones = SeleccionSerializer(many=True, read_only=True)
+    selecciones = serializers.SerializerMethodField()
+
+    def get_selecciones(self, obj):
+        qs = obj.selecciones.order_by('eliminado', '-fase', 'pk')
+        return SeleccionSerializer(qs, many=True).data
 
     class Meta:
         model = Participante

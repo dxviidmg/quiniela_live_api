@@ -6,7 +6,23 @@ from datetime import datetime
 DIVISORES_48 = [2, 3, 4, 6, 8, 12, 16, 24, 48]
 
 class Seleccion(models.Model):
+    FASES = [
+        (1, 'Grupos'),
+        (2, 'Dieciseisavos'),
+        (3, 'Octavos'),
+        (4, 'Cuartos'),
+        (5, 'Semifinales'),
+        (6, 'Final'),
+    ]
+    
     nombre = models.CharField(max_length=100)
+    fase = models.IntegerField(choices=FASES, default=1)    
+    eliminado = models.BooleanField(default=False)
+    es_tercero = models.BooleanField(default=False)
+    es_subcampeon = models.BooleanField(default=False)
+    es_campeon = models.BooleanField(default=False)
+
+
 
     def __str__(self):
         return self.nombre
