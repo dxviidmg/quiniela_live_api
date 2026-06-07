@@ -6,17 +6,17 @@ from .models import Quiniela, Seleccion, Participante
 
 
 class QuinielaConsumer(AsyncWebsocketConsumer):
-    salas = {}  # {slug: {channel_name: nombre}}
+    # No usar memoria local para multi-instancia. Los datos se gestionan en Redis y DB.
 
     async def connect(self):
         self.slug = self.scope['url_route']['kwargs']['slug']
         self.group_name = f'quiniela_{self.slug}'
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
-        QuinielaConsumer.salas.setdefault(self.slug, {})[self.channel_name] = None
         await self.accept()
         
-        users = [n for n in QuinielaConsumer.salas[self.slug].values() if n]
+        # Obtener lista de usuarios desde la base de datos
+        users = await self._get_users_in_room()
         await self.send(text_data=json.dumps({'type': 'user_list', 'users': users, 'count': len(users)}))
 
     async def receive(self, text_data):
@@ -24,17 +24,21 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
 
         if data.get('type') == 'join':
             nombre = data.get('nombre', 'Anónimo')
-            if nombre in QuinielaConsumer.salas.get(self.slug, {}).values():
+            
+            # Verificar si el nombre ya existe usando la base de datos
+            if await self._nombre_exists_in_room(nombre):
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'El nombre ya está en uso. Elige otro.'}))
                 return
-            usuarios_actuales = [n for n in QuinielaConsumer.salas.get(self.slug, {}).values() if n]
+            
             max_participantes = await self._get_max_participantes()
+            usuarios_actuales = await self._get_users_in_room()
+            
             if len(usuarios_actuales) >= max_participantes:
-                await self.send(text_data=json.dumps({'type': 'error', 'message': f'La quiniela ya está llena ({max_participantes}/{max_participantes}).'}))
+                await self.send(text_data=json.dumps({'type': 'error', 'message': f'La quiniela ya está llena ({len(usuarios_actuales)}/{max_participantes}).'}))
                 return
+            
             await self._save_participante(nombre)
-            QuinielaConsumer.salas[self.slug][self.channel_name] = nombre
-            users = [n for n in QuinielaConsumer.salas[self.slug].values() if n]
+            users = await self._get_users_in_room()
             await self.send(text_data=json.dumps({'type': 'user_list', 'users': users, 'count': len(users)}))
             await self._broadcast_users()
 
@@ -43,15 +47,23 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        QuinielaConsumer.salas.get(self.slug, {}).pop(self.channel_name, None)
-        if not QuinielaConsumer.salas.get(self.slug):
-            QuinielaConsumer.salas.pop(self.slug, None)
-        else:
-            await self._broadcast_users()
+        await self._broadcast_users()
 
     @database_sync_to_async
     def _get_max_participantes(self):
         return Quiniela.objects.get(slug=self.slug).numero_participantes
+
+    @database_sync_to_async
+    def _get_users_in_room(self):
+        """Obtener lista de nombres de participantes desde la base de datos."""
+        quiniela = Quiniela.objects.get(slug=self.slug)
+        return list(quiniela.participantes.values_list('nombre', flat=True))
+
+    @database_sync_to_async
+    def _nombre_exists_in_room(self, nombre):
+        """Verificar si un nombre ya existe en la quiniela."""
+        quiniela = Quiniela.objects.get(slug=self.slug)
+        return quiniela.participantes.filter(nombre=nombre).exists()
 
     @database_sync_to_async
     def _save_participante(self, nombre):
@@ -110,9 +122,16 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
 
         return {'resultados': resultados}
 
-    async def _broadcast_users(self):
-        users = [n for n in QuinielaConsumer.salas.get(self.slug, {}).values() if n]
-        await self.channel_layer.group_send(
+    @database_sync_to_async
+    def _broadcast_users(self):
+        """Broadcast a todos los usuarios conectados actualmente."""
+        users = []
+        quiniela = Quiniela.objects.filter(slug=self.slug).first()
+        if quiniela:
+            users = list(quiniela.participantes.values_list('nombre', flat=True))
+        
+        # Enviar a todos los miembros del grupo (incluyendo el actual)
+        self.channel_layer.group_send(
             self.group_name,
             {'type': 'quiniela.users', 'users': users}
         )
