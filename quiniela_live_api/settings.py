@@ -50,29 +50,14 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'quiniela_live_api.asgi.application'
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-
-if REDIS_URL.startswith("rediss://"):
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [{
-                    "address": REDIS_URL,
-                    "ssl_cert_reqs": None,
-                }],
-            },
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [os.environ.get("REDIS_URL", "redis://localhost:6379/0")],
         },
-    }
-else:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [REDIS_URL],
-            },
-        },
-    }
+    },
+}
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
