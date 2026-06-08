@@ -26,10 +26,14 @@ def create_preference(request):
         "items": [{
             "title": "Seguimiento Premium con Amigos – Quina Live",
             "quantity": 1,
-            "unit_price": 10,
+            "unit_price": 29,
             "currency_id": "MXN",
         }],
-        "back_url": f"{settings.FRONTEND_URL}{lobby_url}",
+        "back_urls": {
+            "success": f"{settings.FRONTEND_URL}{lobby_url}",
+            "failure": f"{settings.FRONTEND_URL}/pools/{pool_id}/bombos",
+            "pending": f"{settings.FRONTEND_URL}{lobby_url}",
+        },
         "auto_return": "approved",
         "external_reference": pool_id,
     }
