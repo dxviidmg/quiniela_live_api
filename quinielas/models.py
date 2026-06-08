@@ -16,7 +16,7 @@ class Seleccion(models.Model):
     ]
     
     nombre = models.CharField(max_length=100)
-    codigo = models.CharField(max_length=2)
+    codigo = models.CharField(max_length=6)
     fase = models.IntegerField(choices=FASES, default=1)    
     eliminado = models.BooleanField(default=False)
     es_tercero = models.BooleanField(default=False)
@@ -57,6 +57,7 @@ class Participante(models.Model):
     nombre = models.CharField(max_length=100)
     selecciones = models.ManyToManyField(Seleccion, blank=True)
     fecha_union = models.DateTimeField(auto_now_add=True)
-
+    identificador = models.CharField(max_length=100, default="")
+    
     def __str__(self):
         return f"{self.nombre} - {self.quiniela.nombre}"

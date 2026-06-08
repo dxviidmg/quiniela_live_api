@@ -6,7 +6,7 @@ from .models import Quiniela, Seleccion, Participante
 
 
 class QuinielaConsumer(AsyncWebsocketConsumer):
-    rooms = {}  # {group_name: [nombres]}
+    rooms = {}  # {group_name: [{nombre, identificador}]}
 
     async def connect(self):
         self.slug = self.scope['url_route']['kwargs']['slug']
@@ -25,8 +25,10 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
 
         if data.get('type') == 'join':
             nombre = data.get('nombre', 'Anónimo')
+            identificador = data.get('identificador', '')
 
-            if nombre in self.rooms[self.group_name]:
+            nombres_en_sala = [u['nombre'] for u in self.rooms[self.group_name]]
+            if nombre in nombres_en_sala:
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'El nombre ya está en uso. Elige otro.'}))
                 return
 
@@ -36,24 +38,27 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
                 return
 
             self.nombre = nombre
-            self.rooms[self.group_name].append(nombre)
+            self.identificador = identificador
+            self.rooms[self.group_name].append({'nombre': nombre, 'identificador': identificador})
             await self._broadcast_users()
 
         elif data.get('type') == 'start_draw':
             await self._handle_start_draw()
 
     async def disconnect(self, close_code):
-        if self.nombre and self.nombre in self.rooms.get(self.group_name, []):
-            self.rooms[self.group_name].remove(self.nombre)
+        if self.nombre:
+            self.rooms[self.group_name] = [
+                u for u in self.rooms.get(self.group_name, []) if u['nombre'] != self.nombre
+            ]
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
         await self._broadcast_users()
 
     async def _send_user_list(self):
-        users = self.rooms.get(self.group_name, [])
+        users = [u['nombre'] for u in self.rooms.get(self.group_name, [])]
         await self.send(text_data=json.dumps({'type': 'user_list', 'users': users, 'count': len(users)}))
 
     async def _broadcast_users(self):
-        users = self.rooms.get(self.group_name, [])
+        users = [u['nombre'] for u in self.rooms.get(self.group_name, [])]
         await self.channel_layer.group_send(
             self.group_name,
             {'type': 'quiniela.users', 'users': users}
@@ -84,8 +89,8 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def _perform_draw(self):
         quiniela = Quiniela.objects.get(slug=self.slug)
-        nombres = self.rooms.get(self.group_name, [])
-        num_participantes = len(nombres)
+        usuarios = self.rooms.get(self.group_name, [])
+        num_participantes = len(usuarios)
 
         if num_participantes < quiniela.numero_participantes:
             return {'error': f'Faltan participantes ({num_participantes}/{quiniela.numero_participantes})'}
@@ -98,18 +103,14 @@ class QuinielaConsumer(AsyncWebsocketConsumer):
             for i in range(num_selecciones_por_participante)
         ]
 
-        # Crear participantes en DB y asignar selecciones
         resultados = []
-        for nombre in nombres:
-            participante, _ = Participante.objects.get_or_create(quiniela=quiniela, nombre=nombre)
-            for bombo in bombos:
-                random.shuffle(bombo)
-            resultados.append({'participante': participante, 'nombre': nombre})
-
-        # Reasignar: por cada bombo, asignar una selección a cada participante
-        resultados = []
-        for nombre in nombres:
-            participante, _ = Participante.objects.get_or_create(quiniela=quiniela, nombre=nombre)
+        for u in usuarios:
+            participante, _ = Participante.objects.get_or_create(
+                quiniela=quiniela, nombre=u['nombre'],
+                defaults={'identificador': u.get('identificador', '')}
+            )
+            participante.identificador = u.get('identificador', '')
+            participante.save()
             resultados.append(participante)
 
         for bombo in bombos:

@@ -31,7 +31,7 @@ PAISES = {
     "Túnez": "tn",
     "Costa de Marfil": "ci",
     "Paraguay": "py",
-    "Escocia": "gb",
+    "Escocia": "gb-sct",
     "Suecia": "se",
     "Arabia Saudita": "sa",
     "Sudáfrica": "za",

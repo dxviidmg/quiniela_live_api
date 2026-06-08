@@ -68,6 +68,19 @@ def paises_por_bombo(request):
         resultado[f"bombo_{i + 1}"] = SeleccionSerializer(grupo, many=True).data
     return Response(resultado)
 
+@api_view(['GET'])
+def mis_quinielas(request):
+    identificador = request.query_params.get('identificador', '').strip()
+    if not identificador:
+        return Response({'error': 'El parámetro identificador es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+    participantes = Participante.objects.filter(identificador=identificador).select_related('quiniela')
+    data = [
+        {'nombre': p.quiniela.nombre, 'slug': p.quiniela.slug}
+        for p in participantes
+    ]
+    return Response(data)
+
+
 class QuinielaViewSet(ListModelMixin, CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Quiniela.objects.all()
     serializer_class = QuinielaSerializer
