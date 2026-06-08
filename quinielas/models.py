@@ -16,7 +16,7 @@ class Seleccion(models.Model):
     ]
     
     nombre = models.CharField(max_length=100)
-    codigo = models.CharField(max_length=2)
+    codigo = models.CharField(max_length=6)
     fase = models.IntegerField(choices=FASES, default=1)    
     eliminado = models.BooleanField(default=False)
     es_tercero = models.BooleanField(default=False)
