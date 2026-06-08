@@ -12,6 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -145,3 +148,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'https://quiniela-live-api.onrender.com',
 ]
+
+# Mercado Pago
+MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
