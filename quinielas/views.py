@@ -47,7 +47,10 @@ def create_preference(request):
     init_point = result.get("response", {}).get("init_point")
     if not init_point:
         return Response({"error": "No se pudo crear la preferencia de pago"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
+    quiniela = Quiniela.objects.get(slug=pool_id)
+    quiniela.pagado = True
+    quiniela.save()
     return Response({"init_point": init_point})
 
 

@@ -40,6 +40,7 @@ class Quiniela(models.Model):
     segundo_premio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     tercer_premio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     sorteada = models.BooleanField(default=False)
+    pagado = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.slug:
