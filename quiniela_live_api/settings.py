@@ -31,7 +31,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = ['https://quiniela-live-api.onrender.com']
+CSRF_TRUSTED_ORIGINS = ['https://quina-live-api-dca3ca36bbbb.herokuapp.com']
 
 
 # Application definition
